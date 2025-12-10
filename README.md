@@ -17,6 +17,14 @@ I’m building a practical lab where I set up Active Directory, integrate Linux 
 - Service hardening
 - Enterprise security practices (CIS, STIG, Zero Trust)
 
+<br>
+<br>
+
+Resource Download Links:
+- [VMWare WorkStation](https://www.vmware.com/products/desktop-hypervisor/workstation-and-fusion)
+- [Windows Server 2022 ISO](https://www.microsoft.com/en-us/evalcenter/download-windows-server-2022)
+- [Rocky Linux ISO](https://rockylinux.org/download)
+
 ## My goal
 I want hands-on understanding of identity, authentication, and security in a mixed Windows–Linux environment instead of just reading theory.
 

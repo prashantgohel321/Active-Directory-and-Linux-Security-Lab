@@ -2,18 +2,38 @@
 
 In this file I am preparing my system for building a full Active Directory and Linux security lab using VMware Workstation. Before I install Windows Server and Rocky Linux inside VMware, I need to be sure my host system and VMware itself are properly set up. I also need to understand what a hypervisor is, how VMware uses virtualization, and why hardware requirements matter in practice.
 
+Resource Download Links:
+- [VMWare WorkStation](https://www.vmware.com/products/desktop-hypervisor/workstation-and-fusion)
+- [Windows Server 2022 ISO](https://www.microsoft.com/en-us/evalcenter/download-windows-server-2022)
+- [Rocky Linux ISO](https://rockylinux.org/download)
+
 ---
+
+- [vmware-setup.md](#vmware-setupmd)
+  - [Understanding What VMware Workstation Is](#understanding-what-vmware-workstation-is)
+  - [Why I Need VMware for This Lab](#why-i-need-vmware-for-this-lab)
+  - [Host System Requirements and Why They Matter](#host-system-requirements-and-why-they-matter)
+    - [CPU requirements](#cpu-requirements)
+    - [Memory (RAM) requirements](#memory-ram-requirements)
+    - [Storage considerations](#storage-considerations)
+    - [Virtualization support in BIOS or UEFI](#virtualization-support-in-bios-or-uefi)
+  - [Installing VMware Workstation](#installing-vmware-workstation)
+  - [Preparing Storage for Virtual Machines](#preparing-storage-for-virtual-machines)
+  - [Understanding VMware Virtual Disks](#understanding-vmware-virtual-disks)
+  - [Understanding Virtual CPUs and Memory](#understanding-virtual-cpus-and-memory)
+  - [First Launch of VMware](#first-launch-of-vmware)
+  - [What I Achieve After This File](#what-i-achieve-after-this-file)
 
 <br>
 <br>
 
 ## Understanding What VMware Workstation Is
 
-<mark><b>VMware Workstation</b></mark> is an application that enables virtualization on a desktop or laptop. <mark><b>Virtualization</b></mark> means running multiple operating systems at the same time on a single physical machine by creating virtual computers. These virtual computers are known as <mark><b>virtual machines</b></mark>. Each virtual machine behaves like a separate physical server even though it shares the hardware resources of my host system.
+- <mark><b>VMware Workstation</b></mark> is an application that enables virtualization on a desktop or laptop. <mark><b>Virtualization</b></mark> means running multiple operating systems at the same time on a single physical machine by creating virtual computers. These virtual computers are known as <mark><b>virtual machines</b></mark>. Each virtual machine behaves like a separate physical server even though it shares the hardware resources of my host system.
 
-VMware itself is called a hypervisor. A <mark><b>hypervisor</b></mark> is a software layer that manages and allocates physical resources such as CPU cores, memory, storage space, and network interfaces to each virtual machine. VMware Workstation is often called <mark><b>a Type-2 hypervisor</b></mark> because it runs on top of a regular operating system like Windows or Linux. A Type-1 hypervisor would run directly on bare metal without a host OS, but that is not what I am using here.
+- VMware itself is called a hypervisor. A <mark><b>hypervisor</b></mark> is a software layer that manages and allocates physical resources such as CPU cores, memory, storage space, and network interfaces to each virtual machine. VMware Workstation is often called <mark><b>a Type-2 hypervisor</b></mark> because it runs on top of a regular operating system like Windows or Linux. A Type-1 hypervisor would run directly on bare metal without a host OS, but that is not what I am using here.
 
-Inside VMware I can create a virtual environment with multiple servers, each acting as if it were on its own physical hardware. This is exactly what I will use to build <mark><b>a domain controller</b></mark>, a Linux server that joins the domain, and later various security configurations. The advantage is that I am not risking my real system and I can rebuild or revert easily.
+- Inside VMware I can create a virtual environment with multiple servers, each acting as if it were on its own physical hardware. This is exactly what I will use to build <mark><b>a domain controller</b></mark>, a Linux server that joins the domain, and later various security configurations. The advantage is that I am not risking my real system and I can rebuild or revert easily.
 
 <br>
 <details>
@@ -55,16 +75,16 @@ This is great for learning, but not ideal for enterprise production performance.
 
 ## Why I Need VMware for This Lab
 
-The goal of my learning path is to build an actual Active Directory domain, configure Linux authentication against it, and learn Linux security and hardening techniques in a realistic environment. Doing this directly on my real machine is not practical or safe. VMware gives me an isolated environment that behaves like a real network.
+- The goal of my learning path is to build an actual Active Directory domain, configure Linux authentication against it, and learn Linux security and hardening techniques in a realistic environment. Doing this directly on my real machine is not practical or safe. VMware gives me an isolated environment that behaves like a real network.
 
-I can do the following safely inside VMware:
-- Install Windows Server 2022 as a domain controller
-- Install Rocky Linux as a domain member
-- Configure DNS, DHCP, AD DS, Kerberos, and PAM without damaging my real OS
-- Break configurations on purpose and learn how to fix them
-- Use snapshots to quickly roll back changes
+- I can do the following safely inside VMware:
+  - Install Windows Server 2022 as a domain controller
+  - Install Rocky Linux as a domain member
+  - Configure DNS, DHCP, AD DS, Kerberos, and PAM without damaging my real OS
+  - Break configurations on purpose and learn how to fix them
+  - Use snapshots to quickly roll back changes
 
-Creating this kind of environment without virtualization would require multiple physical machines, switching equipment, and network configuration on actual hardware. Virtualization makes it easy and cost-effective.
+- Creating this kind of environment without virtualization would require multiple physical machines, switching equipment, and network configuration on actual hardware. Virtualization makes it easy and cost-effective.
 
 ---
 
@@ -78,16 +98,16 @@ Creating this kind of environment without virtualization would require multiple 
 - I must consider several resource categories because each virtual machine uses part of the host's resources.
 
 ### CPU requirements
-Modern multi-core processors are required because each VM needs at least one or two CPU cores. If the CPU is too weak, running multiple servers will become very slow. The hypervisor schedules CPU time between the virtual machines, and inadequate resources cause noticeable lag.
+- Modern multi-core processors are required because each VM needs at least one or two CPU cores. If the CPU is too weak, running multiple servers will become very slow. The hypervisor schedules CPU time between the virtual machines, and inadequate resources cause noticeable lag.
 
 ### Memory (RAM) requirements
-Windows Server 2022 alone can require several gigabytes of RAM. Rocky Linux will need less, but still a few gigabytes. If my host has only 8 GB total, the system will quickly start swapping memory to disk and become slow. A realistic starting point is at least 16 GB on the host, because I plan to run both VMs at the same time, and possibly others later.
+- Windows Server 2022 alone can require several gigabytes of RAM. Rocky Linux will need less, but still a few gigabytes. If my host has only 8 GB total, the system will quickly start swapping memory to disk and become slow. A realistic starting point is at least 16 GB on the host, because I plan to run both VMs at the same time, and possibly others later.
 
 ### Storage considerations
-I need enough disk space for the VMware installation and for each virtual machine. A Windows Server virtual disk might be 60 GB or more. Rocky Linux might be 30 GB or more. Snapshots also consume additional disk space. It is common to underestimate storage, so planning ahead saves time.
+- I need enough disk space for the VMware installation and for each virtual machine. A Windows Server virtual disk might be 60 GB or more. Rocky Linux might be 30 GB or more. Snapshots also consume additional disk space. It is common to underestimate storage, so planning ahead saves time.
 
 ### Virtualization support in BIOS or UEFI
-Most modern CPUs include virtualization extensions such as Intel VT-x or AMD-V. VMware uses these extensions to run 64-bit operating systems efficiently. If virtualization is disabled in BIOS or UEFI, VMware will still install, but performance and compatibility will be affected. I need to check and enable this setting before I begin.
+- Most modern CPUs include virtualization extensions such as Intel VT-x or AMD-V. VMware uses these extensions to run 64-bit operating systems efficiently. If virtualization is disabled in BIOS or UEFI, VMware will still install, but performance and compatibility will be affected. I need to check and enable this setting before I begin.
 
 ---
 
@@ -96,9 +116,9 @@ Most modern CPUs include virtualization extensions such as Intel VT-x or AMD-V. 
 
 ## Installing VMware Workstation
 
-To install VMware Workstation, I download the installer from the official VMware website. There are two main editions: VMware Workstation Pro and VMware Workstation Player. The Player edition is free for personal use, but the Pro edition offers more features. For my learning lab, VMware Workstation Pro gives me the best environment, especially when I start doing more advanced networking and snapshots.
+- To install VMware Workstation, I download the installer from the official VMware website. There are two main editions: VMware Workstation Pro and VMware Workstation Player. The Player edition is free for personal use, but the Pro edition offers more features. For my learning lab, VMware Workstation Pro gives me the best environment, especially when I start doing more advanced networking and snapshots.
 
-When installing, I usually accept the default options. The installer places the VMware components, creates helper services, and sets up virtual networking drivers. After installation, I should reboot the host computer so the virtualization services initialize properly.
+- When installing, I usually accept the default options. The installer places the VMware components, creates helper services, and sets up virtual networking drivers. After installation, I should reboot the host computer so the virtualization services initialize properly.
 
 ---
 
@@ -107,9 +127,9 @@ When installing, I usually accept the default options. The installer places the 
 
 ## Preparing Storage for Virtual Machines
 
-VMware will create virtual machine files, and these files can become large over time. Before I start creating VMs, I decide where these files should be stored. I can store them on a fast SSD for better performance rather than a slow HDD. The location should have enough free space because Windows Server and snapshots alone can grow significantly during the lab.
+- VMware will create virtual machine files, and these files can become large over time. Before I start creating VMs, I decide where these files should be stored. I can store them on a fast SSD for better performance rather than a slow HDD. The location should have enough free space because Windows Server and snapshots alone can grow significantly during the lab.
 
-It is useful to have a dedicated folder such as "VMs" on a large drive. Keeping everything in one place makes it easier to back up or migrate later. This also prevents cluttering my system drive.
+- It is useful to have a dedicated folder such as "VMs" on a large drive. Keeping everything in one place makes it easier to back up or migrate later. This also prevents cluttering my system drive.
 
 ---
 

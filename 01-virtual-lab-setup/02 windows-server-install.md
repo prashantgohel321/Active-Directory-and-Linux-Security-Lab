@@ -4,6 +4,27 @@ In this file I am installing <mark><b>Windows Server 2022 as a virtual machine</
 
 ---
 
+- [windows-server-install.md](#windows-server-installmd)
+  - [Understanding What Windows Server 2022 Is](#understanding-what-windows-server-2022-is)
+  - [Choosing the Edition](#choosing-the-edition)
+  - [VM Hardware Configuration in VMware](#vm-hardware-configuration-in-vmware)
+    - [Firmware selection (BIOS or UEFI)](#firmware-selection-bios-or-uefi)
+    - [Storage controller and disk type](#storage-controller-and-disk-type)
+    - [Memory allocation](#memory-allocation)
+    - [CPU configuration](#cpu-configuration)
+    - [Network type selection](#network-type-selection)
+    - [Virtual disk size](#virtual-disk-size)
+  - [Starting the Installation in VMware](#starting-the-installation-in-vmware)
+  - [Custom Installation and Disk Layout](#custom-installation-and-disk-layout)
+  - [Creating the Administrator Password](#creating-the-administrator-password)
+  - [Understanding the Administrator Account](#understanding-the-administrator-account)
+  - [Installing VMware Tools](#installing-vmware-tools)
+  - [Windows Updates](#windows-updates)
+  - [Network Settings After Installation](#network-settings-after-installation)
+  - [Preparing for Domain Controller Promotion](#preparing-for-domain-controller-promotion)
+  - [What I Achieve After This File](#what-i-achieve-after-this-file)
+
+
 <br>
 <br>
 
@@ -47,8 +68,10 @@ In this file I am installing <mark><b>Windows Server 2022 as a virtual machine</
 
 - When I create the Windows Server virtual machine in VMware Workstation, VMware guides me through several configuration screens. These steps define how the virtual hardware behaves and what capabilities the VM will have. Understanding these options is important because they directly affect networking, boot method, compatibility, and performance.
 
+![alt text](<../Diagrams/01_02_01 VM HW Config.png>)
+
 ### Firmware selection (BIOS or UEFI)
-During the VM creation wizard I choose between legacy BIOS and UEFI firmware. Before deciding, I need to understand what firmware actually is. Firmware is a low-level program stored on the motherboard that initializes the hardware when a machine powers on. It performs basic checks, sets up hardware, and then hands control to the operating system boot loader.
+- During the VM creation wizard I choose between legacy BIOS and UEFI firmware. Before deciding, I need to understand what firmware actually is. Firmware is a low-level program stored on the motherboard that initializes the hardware when a machine powers on. It performs basic checks, sets up hardware, and then hands control to the operating system boot loader.
 
 <br>
 <details>
@@ -88,38 +111,37 @@ During the VM creation wizard I choose between legacy BIOS and UEFI firmware. Be
 <br>
 
 ### Storage controller and disk type
-VMware presents options for virtual disk setup. I choose a virtual disk in VMDK format. When asked whether to split or create a single file, I can choose either, but split files sometimes make moving the VM easier. <mark><b>Thin provisioning</b></mark> means VMware does not allocate the full size immediately. This saves storage and grows only as needed.
+- VMware presents options for virtual disk setup. I choose a virtual disk in VMDK format. When asked whether to split or create a single file, I can choose either, but split files sometimes make moving the VM easier. <mark><b>Thin provisioning</b></mark> means VMware does not allocate the full size immediately. This saves storage and grows only as needed.
 
 - In VMware, the <mark><b>virtual disk</b></mark> is stored as a VMDK file. That file is basically the hard drive of the virtual machine. Everything the VM installs or stores ends up inside that VMDK. When VMware asks whether to split the disk or keep it in one file, it’s just asking how I want that virtual hard drive stored on my real machine.
 
 - If I choose thin provisioning, VMware won’t grab the entire disk space right away—it will grow the VMDK file only when the VM actually uses the space. That way I don’t waste disk space on my host.
 
 ### Memory allocation
-The wizard shows a slider or fields where I allocate RAM. I set six to eight gigabytes because Windows Server and later domain services need memory for proper performance. If I set too little RAM, installation and role configuration will be slow.
+- The wizard shows a slider or fields where I allocate RAM. I set six to eight gigabytes because Windows Server and later domain services need memory for proper performance. If I set too little RAM, installation and role configuration will be slow.
 
 ### CPU configuration
-I choose at least two virtual CPUs. The wizard often suggests reasonable defaults. Active Directory and DNS benefit from additional CPU resources, and the system will feel more responsive.
+- I choose at least two virtual CPUs. The wizard often suggests reasonable defaults. Active Directory and DNS benefit from additional CPU resources, and the system will feel more responsive.
 
 ### Network type selection
-VMware displays several choices for networking:
+- VMware displays several choices for networking:
 
-- <mark><b>Bridged networking</b></mark>: The VM becomes part of the same physical network as the host. It receives an IP from the same router that my physical system uses.
-- <mark><b>NAT networking</b></mark>: The VM uses a virtual NAT and receives an IP belonging to a virtual network inside VMware. It still has internet access through the host but remains isolated from the physical LAN.
-- <mark><b>Host-only networking</b></mark>: The VM communicates only with the host and other host-only VMs. No external network access.
+  - <mark><b>Bridged networking</b></mark>: The VM becomes part of the same physical network as the host. It receives an IP from the same router that my physical system uses.
+  - <mark><b>NAT networking</b></mark>: The VM uses a virtual NAT and receives an IP belonging to a virtual network inside VMware. It still has internet access through the host but remains isolated from the physical LAN.
+  - <mark><b>Host-only networking</b></mark>: The VM communicates only with the host and other host-only VMs. No external network access.
 
 For this lab I select NAT because it keeps the environment isolated while allowing communication between VMs and internet access for updates. NAT also reduces the risk of interfering with my actual home or office network.
 
 ### Virtual disk size
-I set at least sixty gigabytes. Windows Server requires significant space for system files, roles, updates, and logs. Thin provisioning helps conserve host storage and I do not need to commit the full size at once.
+- I set at least sixty gigabytes. Windows Server requires significant space for system files, roles, updates, and logs. Thin provisioning helps conserve host storage and I do not need to commit the full size at once.
 
-After choosing these options, the VM creation wizard finishes and the virtual machine is ready to power on and begin installation.
+- After choosing these options, the VM creation wizard finishes and the virtual machine is ready to power on and begin installation.
 
 
+<br>
+<br>
 
 Before starting the installation, I configure the virtual hardware of the VM. This includes CPU allocation, memory size, virtual disk type, and network adapter mode. These settings affect performance, stability, and later Active Directory deployment.
-
-<br>
-<br>
 
 ## Starting the Installation in VMware
 

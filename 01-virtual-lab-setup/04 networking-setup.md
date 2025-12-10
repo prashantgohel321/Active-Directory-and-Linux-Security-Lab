@@ -4,6 +4,21 @@ In this file I am configuring networking for both virtual machines so that Windo
 
 ---
 
+- [networking-setup.md](#networking-setupmd)
+  - [Understanding Virtual Networking in VMware](#understanding-virtual-networking-in-vmware)
+  - [NAT Networking Explained](#nat-networking-explained)
+  - [Bridged Networking Explained](#bridged-networking-explained)
+  - [Host-Only Networking Explained](#host-only-networking-explained)
+  - [Why NAT Is the Correct Choice for This Lab](#why-nat-is-the-correct-choice-for-this-lab)
+  - [Checking IP Addresses](#checking-ip-addresses)
+  - [Why I Need Static IP Addresses Later](#why-i-need-static-ip-addresses-later)
+  - [DNS Is Critical for Active Directory](#dns-is-critical-for-active-directory)
+  - [Hostname Considerations](#hostname-considerations)
+  - [Verifying Connectivity Between Machines](#verifying-connectivity-between-machines)
+  - [Preparing for Static IP on Windows Server](#preparing-for-static-ip-on-windows-server)
+  - [What I Achieve After This File](#what-i-achieve-after-this-file)
+
+
 <br>
 <br>
 
@@ -84,12 +99,12 @@ NAT satisfies all of these goals. The Windows Server and Rocky Linux VMs will re
 After both systems are installed, I check their IP addresses.
 
 On Windows Server:
-```
+```bash
 ipconfig
 ```
 
 On Rocky Linux:
-```
+```bash
 ip addr
 ```
 

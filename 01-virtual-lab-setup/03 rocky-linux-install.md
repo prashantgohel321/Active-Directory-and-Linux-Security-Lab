@@ -2,7 +2,34 @@
 
 - In this file I am installing Rocky Linux as a virtual machine inside VMware Workstation. The purpose of this Rocky Linux system is <mark><b>to eventually join it to the Windows Active Directory domain</b></mark> and learn Linux authentication, PAM, Kerberos, and security hardening. Before joining it to the domain, I need a clean installation with proper virtual hardware settings. I also need to understand what each installation choice means and why I am choosing it.
 
----
+---- 
+
+[rocky-linux-install.md](#rocky-linux-installmd)
+- [rocky-linux-install.md](#rocky-linux-installmd)
+  - [Understanding What Rocky Linux Is](#understanding-what-rocky-linux-is)
+  - [Creating the Virtual Machine in VMware](#creating-the-virtual-machine-in-vmware)
+  - [Virtual Hardware Configuration](#virtual-hardware-configuration)
+    - [Firmware (BIOS or UEFI)](#firmware-bios-or-uefi)
+    - [CPU Allocation](#cpu-allocation)
+    - [Memory (RAM)](#memory-ram)
+    - [Virtual Disk](#virtual-disk)
+    - [Network Adapter Type](#network-adapter-type)
+  - [Booting the Installer](#booting-the-installer)
+  - [Installation Summary and Settings](#installation-summary-and-settings)
+    - [Language and keyboard](#language-and-keyboard)
+    - [Installation destination](#installation-destination)
+    - [Software selection](#software-selection)
+    - [Root password and user account](#root-password-and-user-account)
+  - [Installing the System](#installing-the-system)
+  - [First Login and Basic Verification](#first-login-and-basic-verification)
+  - [Installing VMware Tools (Open VM Tools)](#installing-vmware-tools-open-vm-tools)
+  - [System Updates](#system-updates)
+  - [Preparing for Domain Integration](#preparing-for-domain-integration)
+  - [What I Achieve After This File](#what-i-achieve-after-this-file)
+
+
+<br>
+<br>
 
 ## Understanding What Rocky Linux Is
 
@@ -12,11 +39,19 @@
 
 ---
 
+<br>
+<br>
+
 ## Creating the Virtual Machine in VMware
 
 - To begin, I create a new virtual machine in VMware Workstation and select the Rocky Linux ISO as the installation media. VMware detects it as a Linux operating system and prepares a suitable configuration. Before installation starts, I must configure the virtual hardware carefully.
 
+![alt text](<../Diagrams/01_03_00 Virtual HW Config.png>)
+
 ---
+
+<br>
+<br>
 
 ## Virtual Hardware Configuration
 
@@ -33,22 +68,28 @@
 - I create a virtual disk of around thirty to forty gigabytes. Rocky Linux installation and package updates require disk space. Using thin provisioning means the disk grows as needed instead of occupying the full size from the start.
 
 ### Network Adapter Type
-VMware offers several network modes when creating a VM:
+- VMware offers several network modes when creating a VM:
 
-- Bridged networking connects the VM as if it is a physical machine on the actual network.
-- NAT networking places the VM behind a virtual router inside VMware, allowing internet access while isolating the VM from the external network.
-- Host-only networking isolates the VM so it only communicates with the host and other host-only VMs.
-- Custom networks allow advanced virtual networking setups.
+  - <mark><b>Bridged networking</b></mark> connects the VM as if it is a physical machine on the actual network.
+  - <mark><b>NAT</b></mark> networking places the VM behind a virtual router inside VMware, allowing internet access while isolating the VM from the external network.
+  - <mark><b>Host-only</b></mark> networking isolates the VM so it only communicates with the host and other host-only VMs.
+  - <mark><b>Custom</b></mark> networks allow advanced virtual networking setups.
 
-For this lab, NAT is the practical choice. NAT ensures that Windows Server and Rocky Linux are on the same internal network and can reach each other for domain integration. It also provides internet access for package installation without exposing my lab to the real network.
+- For this lab, NAT is the practical choice. NAT ensures that Windows Server and Rocky Linux are on the same internal network and can reach each other for domain integration. It also provides internet access for package installation without exposing my lab to the real network.
 
 ---
+
+<br>
+<br>
 
 ## Booting the Installer
 
 - After configuring the hardware, I start the VM. The Rocky Linux installer loads from the ISO. The first screen allows me to choose Install Rocky Linux. I continue to the installation summary.
 
 ---
+
+<br>
+<br>
 
 ## Installation Summary and Settings
 
@@ -68,11 +109,17 @@ For this lab, NAT is the practical choice. NAT ensures that Windows Server and R
 
 ---
 
+<br>
+<br>
+
 ## Installing the System
 
 - Once I confirm installation settings, the system begins installing packages. After installation completes, I reboot the VM and the system starts normally. If UEFI was used, the EFI System Partition holds the boot information and allows the system to start without relying on legacy BIOS methods.
 
 ---
+
+<br>
+<br>
 
 ## First Login and Basic Verification
 
@@ -92,6 +139,9 @@ ping rocky-linux.org
 
 ---
 
+<br>
+<br>
+
 ## Installing VMware Tools (Open VM Tools)
 
 - Rocky Linux uses open-vm-tools rather than proprietary VMware Tools. Open-vm-tools provides integration with VMware features such as improved display, shared clipboard, and proper virtual hardware support. To install open-vm-tools I use:
@@ -103,6 +153,9 @@ dnf install open-vm-tools
 - After installation, I enable and start the relevant services. This ensures smooth operation inside VMware.
 
 ---
+
+<br>
+<br>
 
 ## System Updates
 
@@ -116,11 +169,17 @@ dnf update
 
 ---
 
+<br>
+<br>
+
 ## Preparing for Domain Integration
 
 - I do not join the domain here. Joining requires proper hostname configuration, DNS setup, and later Kerberos configuration. These steps will be written in separate files. At this point, I have a clean Rocky Linux system ready for domain operations.
 
 ---
+
+<br>
+<br>
 
 ## What I Achieve After This File
 
