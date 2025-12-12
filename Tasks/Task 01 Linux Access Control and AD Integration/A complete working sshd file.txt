@@ -1,0 +1,21 @@
+pgohel@rocky01:~$ sudo cat /etc/pam.d/sshd
+[sudo] password for pgohel: 
+#%PAM-1.0
+#auth requisite pam_localuser.so
+#auth       requisite pam_succeed_if.so uid < 1000
+auth sufficient pam_sss.so
+auth       substack     password-auth
+auth       required     pam_access.so
+auth       include      postlogin
+account    required     pam_sepermit.so
+account    required     pam_nologin.so
+account [success=1 default=ignore] pam_sss.so
+account requisite pam_deny.so
+account    include      password-auth
+password   include      password-auth
+session    required     pam_selinux.so close
+session    required     pam_loginuid.so
+session    optional     pam_keyinit.so force revoke
+session    required     pam_selinux.so open env_params
+session    include      password-auth
+session    include      postlogin
