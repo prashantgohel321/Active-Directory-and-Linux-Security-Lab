@@ -10,7 +10,6 @@
   - [Why I Needed a Custom Authselect Profile](#why-i-needed-a-custom-authselect-profile)
   - [Creating My Custom Authselect Profile](#creating-my-custom-authselect-profile)
     - [Step 1: Create the new profile](#step-1-create-the-new-profile)
-    - [Step 2: Activate the profile with required features](#step-2-activate-the-profile-with-required-features)
   - [Adding sshd PAM File Inside Custom Profile](#adding-sshd-pam-file-inside-custom-profile)
   - [The Final Working PAM Logic (The Core Fix)](#the-final-working-pam-logic-the-core-fix)
     - [The three lines that actually solved the problem:](#the-three-lines-that-actually-solved-the-problem)
@@ -85,26 +84,9 @@ sudo authselect create-profile myprofile --base-on sssd
 
 This created:
 
-```
+```bash
 /etc/authselect/custom/myprofile/
 ```
-
-### Step 2: Activate the profile with required features
-
-```
-sudo authselect select custom/myprofile \
-    --enable-feature with-sudo \
-    --enable-feature with-pamaccess \
-    --enable-feature with-mkhomedir --force
-```
-
-**Why these features?**
-
-* `with-sudo`: ensures sudo PAM integration exists
-* `with-pamaccess`: gives flexibility (even if I later disabled `pam_access`)
-* `with-mkhomedir`: creates AD user home directories on first login
-
----
 
 <br>
 <br>
@@ -113,7 +95,7 @@ sudo authselect select custom/myprofile \
 
 The custom profile does **not include an sshd file by default**, so I created it manually:
 
-```
+```bash
 sudo cp /etc/pam.d/sshd /etc/authselect/custom/myprofile/sshd
 ```
 
@@ -121,7 +103,7 @@ Then I replaced the entire content of that file with my **final working PAM stac
 
 After modifying, I applied everything:
 
-```
+```bash
 sudo authselect apply-changes
 ```
 
@@ -138,7 +120,7 @@ After a LOT of trial and error, I discovered that SSH access control should not 
 
 ### The three lines that actually solved the problem:
 
-```text
+```bash
 auth       sufficient   pam_sss.so
 account    [success=1 default=ignore] pam_sss.so
 account    requisite    pam_deny.so
