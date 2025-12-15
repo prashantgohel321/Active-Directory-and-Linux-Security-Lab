@@ -88,8 +88,7 @@ Ansible is written in Python, so it is installed using OS package managers.
 
 ```bash
 sudo apt update
-sudo apt install software-properties-common -y
-sudo add-apt-filesitory --yes --update ppa:ansible/ansible
+sudo apt-add-repository ppa:ansible/ansible
 sudo apt install ansible -y
 ```
 
@@ -111,7 +110,7 @@ Ansible uses SSH. Password-based SSH does not scale and should not be used.
 ### Generate SSH Key on Control Node
 
 ```bash
-ssh-keygen -t rsa -b 4096 -C "ansible-control"
+ssh-keygen -t rsa -C "ansible-control"
 ```
 
 This creates:
