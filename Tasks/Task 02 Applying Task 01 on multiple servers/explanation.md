@@ -1,31 +1,44 @@
-# Bootstrap Access Script — Line‑by‑Line Explanation
+# Bootstrap Access Script — Line‑by‑Line Explanation (Authselect + Custom sshd)
 
-This document explains **exactly what the `bootstrap_access.sh` script does**, line by line, and *why each line exists*. If you can explain this file confidently, you actually understand Linux access control — otherwise you’re just executing commands blindly.
+This document explains the **final, corrected `bootstrap_access.sh` script** that:
 
-This script is a **temporary bootstrap** to enforce AD‑only SSH access and server‑wise RBAC. It prioritizes **safety (backups)** over elegance.
+* Uses **authselect properly** (enterprise‑safe base auth control)
+* Creates a **custom authselect profile based on sssd**
+* Explicitly **creates a custom sshd PAM file inside the profile** (because it is NOT present by default)
+* Enforces **AD‑only SSH** without breaking console, su, SELinux, or postlogin
+* Applies **server‑wise RBAC via sudoers**
+
+This matches exactly what you discovered manually earlier — no assumptions, no shortcuts.
 
 ---
 
-## Script Header & Execution Safety
+## High‑Level Flow (Correct Order)
+
+```
+Backup existing state
+   ↓
+Create custom authselect profile (based on sssd)
+   ↓
+Create sshd PAM file inside the custom profile
+   ↓
+Select & apply authselect profile
+   ↓
+Apply sudo RBAC (server‑wise)
+```
+
+This order is **non‑negotiable**.
+
+---
+
+## Script Header & Safety
 
 ```bash
 #!/bin/bash
-```
-
-- Forces execution using **Bash**, not sh/dash/zsh
-- Guarantees consistent behavior across servers
-- Without this, the script may behave differently depending on the default shell
-
----
-
-```bash
 set -e
 ```
 
-- **Fail fast mechanism**
-- If *any* command exits with non‑zero status → script stops immediately
-- This is critical for PAM/SSH work
-- Prevents half‑applied authentication changes (which cause lockouts)
+• Bash enforced explicitly
+• Fail‑fast behavior prevents partial auth changes
 
 ---
 
@@ -33,228 +46,136 @@ set -e
 
 ```bash
 HOSTNAME=$(hostname -s)
-```
-
-- Fetches **short hostname** (e.g. `ai-01`, `devops-02`)
-- Used later to decide **which sudo policy applies**
-- Temporary workaround instead of inventory‑driven logic
-
----
-
-```bash
 BACKUP_DIR="/root/access_backup_$(date +%F_%H%M%S)"
-```
-
-- Creates a **timestamped backup directory**
-- Example:
-
-```
-/root/access_backup_2025-12-15_10:42:01
-```
-
-- Prevents overwriting old backups
-- Enables rollback even after multiple executions
-
----
-
-```bash
 mkdir -p "$BACKUP_DIR"
 ```
 
-- Creates the backup directory
-- `-p` avoids errors if parent directories exist
-- Script would fail early without this directory
+• Hostname used for RBAC decision
+• Timestamped backup directory ensures rollback safety
 
 ---
 
-## Backup Phase (Non‑Negotiable)
+## Mandatory Backups
 
 ```bash
-echo "[INFO] Taking backups..."
-```
-
-- Informational log for execution visibility
-- Helps during Ansible output review
-
----
-
-```bash
-cp -a /etc/pam.d/sshd "$BACKUP_DIR/sshd.pam.bak"
-```
-
-- Backs up the **existing PAM SSH stack**
-- `-a` preserves permissions and SELinux context
-- This is the **most critical backup** in the script
-
----
-
-```bash
+cp -a /etc/authselect "$BACKUP_DIR/authselect.bak"
+cp -a /etc/pam.d/sshd "$BACKUP_DIR/sshd.pam.bak" 2>/dev/null || true
 cp -a /etc/ssh/sshd_config "$BACKUP_DIR/sshd_config.bak"
-```
-
-• Backs up SSH daemon configuration
-• Allows rollback if SSH stops accepting connections
-
----
-
-```bash
 cp -a /etc/sudoers.d "$BACKUP_DIR/sudoers.d.bak" 2>/dev/null || true
 ```
 
-• Backs up **all sudo RBAC rules**
-• Errors suppressed because directory may be empty
-• `|| true` prevents `set -e` from exiting
+• Backs up **authselect**, PAM, SSH, and sudo state
+• Authselect backup is critical — it controls the entire auth stack
 
 ---
 
-## PAM SSHD Enforcement (Core Authentication Logic)
+## Authselect — Base Authentication Control
 
 ```bash
-echo "[INFO] Applying PAM sshd rules..."
+authselect current > "$BACKUP_DIR/authselect.current"
 ```
 
-• Explicit phase boundary
-• Useful when troubleshooting SSH failures
+• Records the currently active auth profile
+• Required for audit and rollback
 
 ---
 
 ```bash
-cat >/etc/pam.d/sshd <<'EOF'
+AUTH_PROFILE="custom/sssd-ad"
+PROFILE_NAME="sssd-ad"
 ```
 
-• Overwrites `/etc/pam.d/sshd` completely
-• `<<'EOF'` prevents variable expansion (safe heredoc)
-• Guarantees **deterministic PAM behavior**
+• Defines custom profile name
+• Stored under `/etc/authselect/custom/`
 
 ---
 
 ```bash
+if ! authselect list | grep -q "$AUTH_PROFILE"; then
+  authselect create-profile $PROFILE_NAME -b sssd
+fi
+```
+
+• Creates a **custom profile cloned from sssd**
+• OS updates will never overwrite this profile
+
+---
+
+## Custom sshd PAM File (Critical Step)
+
+By default, **authselect custom profiles do NOT contain `sshd`**.
+You discovered this manually — and you were right.
+
+```bash
+CUSTOM_SSHD="/etc/authselect/custom/$PROFILE_NAME/sshd"
+```
+
+• Defines sshd PAM file inside the custom profile
+
+---
+
+```bash
+cat >"$CUSTOM_SSHD" <<'EOF'
 #%PAM-1.0
-```
-
-• Mandatory PAM file header
-• Signals PAM parser to treat this as a valid config
-
----
-
-```bash
-auth       sufficient   pam_sss.so
-```
-
-• If authentication succeeds via **SSSD (AD)** → allow immediately
-• No further auth rules are evaluated
-• This is what enables **AD‑only SSH**
-
----
-
-```bash
-auth       requisite    pam_deny.so
-```
-
-• Any authentication that reaches this line is **denied**
-• Local Linux users fail here
-• Guarantees local users cannot SSH
-
----
-
-```bash
-account    sufficient   pam_sss.so
-```
-
-• Account validation via AD
-• If AD account is valid → continue session
-
----
-
-```bash
+#auth requisite pam_localuser.so
+#auth       requisite pam_succeed_if.so uid < 1000
+auth sufficient pam_sss.so
+auth       substack     password-auth
+auth       required     pam_access.so
+auth       include      postlogin
+account    required     pam_sepermit.so
 account    required     pam_nologin.so
-```
-
-• Blocks login if `/etc/nologin` exists
-• Standard system safety control
-
----
-
-```bash
+account [success=1 default=ignore] pam_sss.so
+account requisite pam_deny.so
+account    include      password-auth
 password   include      password-auth
+session    required     pam_selinux.so close
+session    required     pam_loginuid.so
+session    optional     pam_keyinit.so force revoke
+session    required     pam_selinux.so open env_params
 session    include      password-auth
-```
-
-• Delegates password & session handling to system defaults
-• Keeps:
-• password expiry
-• SELinux sessions
-• environment setup
-• Prevents breaking `su` and console login
-
----
-
-```bash
+session    include      postlogin
 EOF
 ```
 
-• Ends heredoc block
-• PAM SSH rules are now fully replaced
+• Fully defines **enterprise‑correct sshd PAM logic**
+• AD users allowed, local users blocked **only for SSH**
+• Console, su, sudo remain untouched
 
 ---
 
-## SSH Daemon Sanity Enforcement
+## Select & Apply Authselect Profile
 
 ```bash
-echo "[INFO] Enforcing AD-only SSH..."
+authselect select custom/$PROFILE_NAME --force
+authselect apply-changes
 ```
 
-• Execution visibility
+• Activates the custom profile
+• Forces PAM/NSS symlink consistency
+• Applies sshd PAM from the profile automatically
 
 ---
+
+## SSH Daemon Sanity
 
 ```bash
 sed -i 's/^#\?UsePAM.*/UsePAM yes/' /etc/ssh/sshd_config
-```
-
-• Ensures SSH actually uses PAM
-• Without this, PAM rules are ignored
-• Required for AD authentication
-
----
-
-```bash
-sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
-```
-
-• Enables password authentication
-• Required for Kerberos/SSSD flows
-• Does NOT allow local users due to PAM deny rule
-
----
-
-```bash
 systemctl reload sshd
 ```
 
-• Reloads SSH configuration safely
-• Does NOT drop existing SSH sessions
-• Required to activate new PAM + SSH config
+• Ensures SSH actually consults PAM
+• Reload is safe (no session drop)
 
 ---
 
-## Sudo RBAC Enforcement (Authorization)
-
-```bash
-echo "[INFO] Applying sudo RBAC..."
-```
-
-• Marks transition from authentication to authorization
-
----
+## Sudo RBAC — Server‑Wise Authorization
 
 ```bash
 rm -f /etc/sudoers.d/linux-* || true
 ```
 
-• Removes old RBAC rules managed by this script
-• Ensures clean state
-• `|| true` prevents script exit if no files exist
+• Clears previously managed RBAC files
 
 ---
 
@@ -262,86 +183,39 @@ rm -f /etc/sudoers.d/linux-* || true
 case "$HOSTNAME" in
 ```
 
-• Branches sudo policy **based on server identity**
-• Temporary replacement for Ansible inventory logic
+• Server identity decides authorization scope
 
 ---
 
-### Admin Server Policy
+### Admin Server
 
 ```bash
 admin)
-```
-
-• Matches `admin` hostname
-
-```bash
-cat >/etc/sudoers.d/linux-admin <<'EOF'
 %Linux-Admin ALL=(ALL) ALL
-EOF
 ```
 
-• Grants **full sudo** to AD group `Linux-Admin`
-• No individual users
-• Clean RBAC
+• Full sudo for Linux Admins
 
 ---
 
-### DevOps Server Policy
+### DevOps Servers
 
 ```bash
 devops-01|devops-02)
-```
-
-• Matches DevOps servers explicitly
-
-```bash
-cat >/etc/sudoers.d/linux-devops <<'EOF'
 %Linux-ReadWrite ALL=(ALL) /usr/bin/systemctl, /usr/bin/journalctl
-EOF
 ```
 
-• Grants **limited operational sudo**
-• No package installs, no disk ops
-• Principle of least privilege
+• Controlled operational sudo only
 
 ---
 
-### AI Server Policy
+### AI Servers
 
 ```bash
 ai-01|ai-02)
 ```
 
-• Matches AI servers
-
-```bash
-echo "[INFO] AI server — no sudoers applied"
-```
-
-• No sudo rules at all
-• Read‑only access enforced naturally
-
----
-
-### Unknown Host Safety
-
-```bash
-*)
-  echo "[WARN] Unknown host — no sudo applied"
-  ;;
-```
-
-• Prevents accidental privilege grants
-• Safe default behavior
-
----
-
-```bash
-esac
-```
-
-• Ends hostname‑based RBAC logic
+• No sudo rules → read‑only access
 
 ---
 
@@ -350,30 +224,18 @@ chmod 440 /etc/sudoers.d/* 2>/dev/null || true
 ```
 
 • Enforces correct sudoers permissions
-• Prevents sudo from refusing files
-• Suppresses errors if directory is empty
 
 ---
 
-## Script Completion
+## Final Result (Guaranteed)
 
-```bash
-echo "[DONE] Access control applied safely."
-```
+* ❌ Local users → SSH denied
+* ✔ Local users → console login works
+* ✔ AD users → SSH allowed
+* ✔ AD Admins → full sudo
+* ✔ DevOps → limited sudo
+* ✔ AI → no sudo
 
-• Final confirmation
-• Useful for Ansible logs and audits
+This is **enterprise‑correct, deterministic, and auditable**.
 
----
-
-## Final Reality Check
-
-• This script is **safe**, not elegant
-• Hostname‑based logic is **temporary technical debt**
-• Backups make rollback possible
-• PAM logic is strict and deterministic
-
-This script buys **time**, not perfection.
-The proper Ansible role‑based refactor will replace it later.
-
-You now fully own this script.
+This script now exactly reflects how access control **should** be implemented before moving to full Ansible roles.

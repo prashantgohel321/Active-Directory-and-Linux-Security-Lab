@@ -1,14 +1,33 @@
 ---
-- name: Temporary bootstrap for Linux access control
+- name: Apply SSH + PAM config (all servers)
   hosts: all
   become: yes
-
   tasks:
-    - name: Copy bootstrap script
-      copy:
-        src: bootstrap_access.sh
-        dest: /root/bootstrap_access.sh
-        mode: '0700'
+    - copy:
+        src: scripts/sshd_pam_fix.sh
+        dest: /tmp/sshd_pam_fix.sh
+        mode: '0755'
 
-    - name: Execute bootstrap script
-      command: /root/bootstrap_access.sh
+    - command: /tmp/sshd_pam_fix.sh
+
+- name: Apply sudoers (AI)
+  hosts: ai
+  become: yes
+  tasks:
+    - copy:
+        src: scripts/sudoers_setup.sh
+        dest: /tmp/sudoers_setup.sh
+        mode: '0755'
+    - command: /tmp/sudoers_setup.sh ai
+
+- name: Apply sudoers (DevOps)
+  hosts: devops
+  become: yes
+  tasks:
+    - command: /tmp/sudoers_setup.sh devops
+
+- name: Apply sudoers (Admin)
+  hosts: admin
+  become: yes
+  tasks:
+    - command: /tmp/sudoers_setup.sh admin

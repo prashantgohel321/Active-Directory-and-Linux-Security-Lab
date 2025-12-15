@@ -1,0 +1,50 @@
+- name: Join Linux servers to Active Directory
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Set DNS to DC
+      command: >
+        nmcli con mod "$(nmcli -t -f NAME con show --active)"
+        ipv4.dns "{{ dc_ip }}"
+        ipv4.ignore-auto-dns yes
+
+    - name: Restart network
+      service:
+        name: NetworkManager
+        state: restarted
+
+    - name: Install AD packages
+      dnf:
+        name:
+          - realmd
+          - sssd
+          - adcli
+          - oddjob
+          - oddjob-mkhomedir
+          - samba-common-tools
+          - krb5-workstation
+          - authselect
+        state: present
+
+    - name: Discover domain
+      command: realm discover {{ ad_domain }}
+      register: realm_discover
+      changed_when: false
+
+    - name: Join domain
+      command: >
+        realm join {{ ad_domain }}
+        -U {{ ad_admin }}
+        --password={{ ad_password }}
+      args:
+        creates: /etc/krb5.keytab
+
+    - name: Enable sssd with mkhomedir
+      command: authselect select sssd with-mkhomedir --force
+
+    - name: Restart sssd
+      service:
+        name: sssd
+        state: restarted
+        enabled: yes
