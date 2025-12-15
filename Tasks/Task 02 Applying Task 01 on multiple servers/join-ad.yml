@@ -3,20 +3,10 @@
   become: yes
   tasks:
 
-    - name: Set DNS to DC
-      command: >
-        nmcli con mod "$(nmcli -t -f NAME con show --active)"
-        ipv4.dns "{{ dc_ip }}"
-        ipv4.ignore-auto-dns yes
-
-    - name: Restart network
-      service:
-        name: NetworkManager
-        state: restarted
-
     - name: Install AD packages
       dnf:
         name:
+          - nmcli
           - realmd
           - sssd
           - adcli
@@ -26,6 +16,18 @@
           - krb5-workstation
           - authselect
         state: present
+
+    # - name: Set DNS to DC
+    #   command: >
+    #     nmcli con mod "$(nmcli -t -f NAME con show --active)"
+    #     ipv4.dns "{{ dc_ip }}"
+    #     ipv4.ignore-auto-dns yes
+
+    # - name: Restart network
+    #   service:
+    #     name: NetworkManager
+    #     state: restarted
+
 
     - name: Discover domain
       command: realm discover {{ ad_domain }}
