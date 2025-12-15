@@ -1,0 +1,14 @@
+---
+- name: Temporary bootstrap for Linux access control
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Copy bootstrap script
+      copy:
+        src: bootstrap_access.sh
+        dest: /root/bootstrap_access.sh
+        mode: '0700'
+
+    - name: Execute bootstrap script
+      command: /root/bootstrap_access.sh
