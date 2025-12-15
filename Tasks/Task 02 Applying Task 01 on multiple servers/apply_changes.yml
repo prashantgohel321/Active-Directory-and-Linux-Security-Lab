@@ -25,13 +25,6 @@
     - name: Apply SSHD PAM changes
       command: /tmp/sshd_pam_fix.sh
 
-- name: Apply sudoers on AI servers (no sudo)
-  hosts: ai
-  become: yes
-  tasks:
-    - debug:
-        msg: "AI server: no sudoers required"
-
 - name: Apply sudoers on DevOps servers
   hosts: devops
   become: yes

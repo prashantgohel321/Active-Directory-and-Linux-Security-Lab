@@ -29,7 +29,6 @@ Cmnd_Alias DELEG    = /usr/sbin/visudo, /usr/bin/chmod, /usr/bin/chown
 
 Cmnd_Alias RW_DENY = SW_MGMT, STR_FS, SYS_CTRL, NET_CFG, DELEG
 
-%Linux-ReadWrite ALL=(ALL:ALL) RW_CMNDS, !RW_DENY
 EOF
 fi
 
