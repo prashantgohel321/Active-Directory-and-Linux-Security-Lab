@@ -25,8 +25,10 @@
     - name: Apply SSHD PAM changes
       command: /tmp/sshd_pam_fix.sh
 
+
+
 - name: Apply sudoers on DevOps servers
-  hosts: devops
+  hosts: lnx_devops
   become: yes
   tasks:
     - name: Copy sudoers_setup.sh
@@ -36,10 +38,12 @@
         mode: '0755'
 
     - name: Apply DevOps sudoers
-      command: /tmp/sudoers_setup.sh devops
+      command: /tmp/sudoers_setup.sh lnx_devops
+
+
 
 - name: Apply sudoers on Admin servers
-  hosts: admin
+  hosts: linuxadmin
   become: yes
   tasks:
     - name: Copy sudoers_setup.sh
@@ -49,4 +53,109 @@
         mode: '0755'
 
     - name: Apply Admin sudoers
-      command: /tmp/sudoers_setup.sh admin
+      command: /tmp/sudoers_setup.sh linuxadmin
+
+
+
+- name: Apply sudoers on Screenza servers
+  hosts: lnx_screenza
+  become: yes
+  tasks:
+    - name: Copy sudoers_setup.sh
+      copy:
+        src: sudoers_setup.sh
+        dest: /tmp/sudoers_setup.sh
+        mode: '0755'
+
+    - name: Apply Admin sudoers
+      command: /tmp/sudoers_setup.sh lnx_screenza
+
+
+
+- name: Apply sudoers on WatchListWarehouse servers
+  hosts: lnx_watchlistwarehouse
+  become: yes
+  tasks:
+    - name: Copy sudoers_setup.sh
+      copy:
+        src: sudoers_setup.sh
+        dest: /tmp/sudoers_setup.sh
+        mode: '0755'
+
+    - name: Apply Admin sudoers
+      command: /tmp/sudoers_setup.sh lnx_watchlistwarehouse
+
+
+
+- name: Apply sudoers on Automation servers
+  hosts: lnx_automation
+  become: yes
+  tasks:
+    - name: Copy sudoers_setup.sh
+      copy:
+        src: sudoers_setup.sh
+        dest: /tmp/sudoers_setup.sh
+        mode: '0755'
+
+    - name: Apply Admin sudoers
+      command: /tmp/sudoers_setup.sh lnx_automation
+
+
+
+- name: Apply sudoers on Security servers
+  hosts: lnx_security
+  become: yes
+  tasks:
+    - name: Copy sudoers_setup.sh
+      copy:
+        src: sudoers_setup.sh
+        dest: /tmp/sudoers_setup.sh
+        mode: '0755'
+
+    - name: Apply Admin sudoers
+      command: /tmp/sudoers_setup.sh lnx_security
+
+
+
+- name: Apply sudoers on SaaS Security servers
+  hosts: lnx_saas_security
+  become: yes
+  tasks:
+    - name: Copy sudoers_setup.sh
+      copy:
+        src: sudoers_setup.sh
+        dest: /tmp/sudoers_setup.sh
+        mode: '0755'
+
+    - name: Apply Admin sudoers
+      command: /tmp/sudoers_setup.sh lnx_saas_security
+
+
+
+- name: Apply sudoers on AI servers
+  hosts: lnx_aiteam
+  become: yes
+  tasks:
+    - name: Copy sudoers_setup.sh
+      copy:
+        src: sudoers_setup.sh
+        dest: /tmp/sudoers_setup.sh
+        mode: '0755'
+
+    - name: Apply Admin sudoers
+      command: /tmp/sudoers_setup.sh lnx_aiteam
+
+
+
+- name: Apply sudoers on NextAML servers
+  hosts: lnx_nextaml
+  become: yes
+  tasks:
+    - name: Copy sudoers_setup.sh
+      copy:
+        src: sudoers_setup.sh
+        dest: /tmp/sudoers_setup.sh
+        mode: '0755'
+
+    - name: Apply Admin sudoers
+      command: /tmp/sudoers_setup.sh lnx_nextaml

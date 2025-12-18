@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PROFILE="myprofile"
+PROFILE="TSS"
 
 echo "[+] Creating custom authselect profile if not exists"
 
@@ -11,7 +11,7 @@ fi
 
 echo "[+] Writing sshd PAM file into custom profile"
 
-cat << EOF > /etc/authselect/custom/${PROFILE}/sshd
+cat << EOF > /etc/pam.d/sshd
 #%PAM-1.0
 
 auth       sufficient   pam_sss.so

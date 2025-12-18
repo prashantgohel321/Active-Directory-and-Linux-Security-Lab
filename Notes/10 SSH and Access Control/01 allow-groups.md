@@ -41,12 +41,12 @@ This is not theoretical. Every example here is intended to work in a real VMware
 
 # 1. Why you would restrict access by AD groups
 
-You restrict access to reduce attack surface and enforce least privilege. Centralizing SSH access control in AD groups makes administration predictable: add or remove a user from the AD group, and access changes across all Linux hosts immediately.
+- You restrict access to reduce attack surface and enforce least privilege. Centralizing SSH access control in AD groups makes administration predictable: add or remove a user from the AD group, and access changes across all Linux hosts immediately.
 
-Common use cases:
-- only developers can SSH into dev servers
-- only ops team can access production servers
-- contractors are given temporary group membership
+- Common use cases:
+  - only developers can SSH into dev servers
+  - only ops team can access production servers
+  - contractors are given temporary group membership
 
 ---
 
