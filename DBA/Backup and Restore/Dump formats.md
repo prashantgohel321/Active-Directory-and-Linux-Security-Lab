@@ -1,8 +1,8 @@
-# PostgreSQL Dump Formats Explained (Simple English)
+# PostgreSQL Dump Formats Explained 
 
 When we use `pg_dump` to backup a database, we can choose different output formats with the `-F` option. Each format has its own benefits. Here are the main ones:
 
-- [PostgreSQL Dump Formats Explained (Simple English)](#postgresql-dump-formats-explained-simple-english)
+- [PostgreSQL Dump Formats Explained](#postgresql-dump-formats-explained)
   - [1. `-Fp` → Plain Text SQL Format (Default)](#1--fp--plain-text-sql-format-default)
   - [2. `-Fc` → Custom Format](#2--fc--custom-format)
   - [3. `-Fd` → Directory Format](#3--fd--directory-format)

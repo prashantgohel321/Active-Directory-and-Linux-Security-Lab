@@ -1,4 +1,4 @@
-# PostgreSQL Backup & Restore – SQL Dump, Restore, pg_dumpall, and Large DB Handling (Practical Flow)
+# PostgreSQL Backup & Restore – SQL Dump, Restore, pg_dumpall, and Large DB Handling
 
 <br>
 <br>
