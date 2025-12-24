@@ -27,7 +27,7 @@
 
 ## What are system catalogs?
 
-- System catalogs are PostgreSQL’s own internal tables where it remembers everything about itself — 
+- System catalogs are PGSQL's own internal tables where it remembers everything about itself — 
   - what tables exist, 
   - who owns them, 
   - which columns they have, 
@@ -72,13 +72,11 @@ All of this information lives in system catalogs.
 A DBA runs:
 
 ```bash
-CREATE DATABASE appdb;
+CREATE DATABASE appdb
 ```
 
 - PostgreSQL does not create catalogs from scratch. Instead, it copies most catalog data from a template database, usually **`template1`**.
-
 - This means appdb already contains catalog tables that describe schemas, data types, functions, and defaults.
-
 - One catalog that changes immediately is **`pg_database`**. A new row is added describing appdb.
 
 At this point:
@@ -95,9 +93,7 @@ At this point:
 ## Step 3: Connecting to the Database
 
 - A client connects to **`appdb`**.
-
 - PostgreSQL checks **`pg_database`** to confirm the database exists and is allowed to accept connections.
-
 - Without **`pg_database`**, PostgreSQL would not even know where to route the connection.
 
 ---
