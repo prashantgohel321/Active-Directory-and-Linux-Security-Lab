@@ -160,6 +160,39 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 > Now, whenever a new database is created, this extension is already available.
 > This avoids manual extension installation and ensures consistency.
 
+<br>
+<details>
+<summary><mark><b>uuid-ossp Explained</b></mark></summary>
+<br>
+
+This **`uuid-ossp`** extension is used to generate UUID values direclty inside PGSQL. It helps create globally unique IDs that wont clash across tables or systems, which is especially useful in distributed applications and modern systems where auto-increment IDs are not enough.
+
+**Common use case commands for **`uuid-ossp`**:**
+```sql
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+```
+> used once to enable UUID functions in the database.
+
+<br>
+
+```sql
+SELECT uuid_generate_v4();
+```
+> Generates a random UUID, useful when you need a unique ID immediately.
+
+<br>
+
+```sql
+CREATE TABLE orders(
+    id UUID DEFAULT uuid_generate_v4(),
+    created_at TIMESTAMP DEFAULT now()
+);
+```
+> Automatically creates a unique ID for every new row, without relying on auto-increment.
+
+</details>
+<br>
+
 ---
 
 <br>
@@ -184,6 +217,9 @@ In enterprise environments, this is often restricted.
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
 GRANT USAGE ON SCHEMA public to PUBLIC;
 ```
+
+> This setup first removes all default permissions on the public schema from everyone, then gives back only basic access. In simple terms, users can see and use objects inside the schema, but they cannot create or modify anything there unless extra permissions are explicitly granted.
+
 > This ensures that all newly created databaes follow the same security baseline.
 
 ---
