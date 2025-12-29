@@ -1,6 +1,12 @@
-# Disk Space Planning and Monitoring for PostgreSQL Backups
+<center>
 
-- [Disk Space Planning and Monitoring for PostgreSQL Backups](#disk-space-planning-and-monitoring-for-postgresql-backups)
+# 05 Disk Space Planning and Monitoring for PostgreSQL Backups
+</center>
+
+<br>
+<br>
+
+- [05 Disk Space Planning and Monitoring for PostgreSQL Backups](#05-disk-space-planning-and-monitoring-for-postgresql-backups)
   - [In simple words](#in-simple-words)
   - [Why disk space is critical for backups](#why-disk-space-is-critical-for-backups)
   - [The silent killer: WAL growth](#the-silent-killer-wal-growth)
@@ -12,23 +18,23 @@
   - [Best practices for disk safety](#best-practices-for-disk-safety)
   - [Real DBA mindset](#real-dba-mindset)
   - [Final mental model](#final-mental-model)
-  - [One-line explanation (interview ready)](#one-line-explanation-interview-ready)
+  - [One-line explanation](#one-line-explanation)
 
+<br>
+<br>
 
 ## In simple words
 
-Most backup disasters happen because **disk gets full**.
-
-Not because PostgreSQL is bad.
-Not because the backup tool failed.
-
-Disk space planning is what separates a safe backup strategy from a dangerous one.
+- Most backup failures happen because the disk runs out of space. It’s usually not PostgreSQL’s fault and not a tool problem either. Proper disk space planning is what truly separates a safe, reliable backup strategy from a risky one.
 
 ---
 
+<br>
+<br>
+
 ## Why disk space is critical for backups
 
-Backups need space at multiple places:
+**Backups need space at multiple places:**
 
 * source server (read + temporary usage)
 * backup destination
@@ -38,15 +44,18 @@ If **any one** of these fills up, backups and sometimes the database itself can 
 
 ---
 
+<br>
+<br>
+
 ## The silent killer: WAL growth
 
-During backups, especially physical backups:
+**During backups, especially physical backups:**
 
 * WAL generation increases
 * WAL retention increases
 * archive queue grows
 
-If WAL directory fills up:
+**If WAL directory fills up:**
 
 * PostgreSQL can stop
 * write operations fail
@@ -55,23 +64,29 @@ This is a very real production outage scenario.
 
 ---
 
+<br>
+<br>
+
 ## Planning disk space for logical backups
 
-For logical backups, I plan:
+**For logical backups, I plan:**
 
 * database size × compression ratio
 * temporary space during dump
 * restore-time space (often more than backup)
 
-Important rule:
+**Important rule:**
 
 > Restore usually needs **more space** than backup.
 
 ---
 
+<br>
+<br>
+
 ## Planning disk space for physical backups
 
-Physical backups require space for:
+**Physical backups require space for:**
 
 * full base backup
 * archived WAL files
@@ -82,14 +97,17 @@ Retention policy is mandatory.
 
 ---
 
+<br>
+<br>
+
 ## Retention policies (must have)
 
-Retention policy defines:
+**Retention policy defines:**
 
 * how many backups to keep
 * how long to keep WAL files
 
-Without retention:
+**Without retention:**
 
 * disk fills silently
 * oldest backups are never removed
@@ -98,9 +116,12 @@ Automation is critical here.
 
 ---
 
+<br>
+<br>
+
 ## Monitoring disk usage
 
-I always monitor:
+**I always monitor:**
 
 * data directory usage
 * WAL directory growth
@@ -110,6 +131,9 @@ I always monitor:
 Disk monitoring should alert **before** space runs out.
 
 ---
+
+<br>
+<br>
 
 ## Common disk-related backup failures
 
@@ -133,19 +157,25 @@ Disk space is cheap. Outages are not.
 
 ---
 
+<br>
+<br>
+
 ## Real DBA mindset
 
-Senior DBAs don’t ask:
+**Senior DBAs don’t ask:**
 
 > “How big is the backup today?”
 
-They ask:
+**They ask:**
 
 > “How fast is disk filling every day?”
 
 Trend matters more than snapshot.
 
 ---
+
+<br>
+<br>
 
 ## Final mental model
 
@@ -156,6 +186,9 @@ Trend matters more than snapshot.
 
 ---
 
-## One-line explanation (interview ready)
+<br>
+<br>
+
+## One-line explanation 
 
 Proper disk space planning and monitoring are essential for PostgreSQL backups to prevent WAL buildup, backup failures, and database outages.

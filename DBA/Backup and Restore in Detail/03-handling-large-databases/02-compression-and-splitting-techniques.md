@@ -1,8 +1,34 @@
-# Compression and Splitting Techniques for PostgreSQL Backups
+<center>
+
+# 02 Compression and Splitting Techniques for PostgreSQL Backups
+</center>
+
+<br>
+<br>
+
+- [02 Compression and Splitting Techniques for PostgreSQL Backups](#02-compression-and-splitting-techniques-for-postgresql-backups)
+  - [In simple words](#in-simple-words)
+  - [Why compression is needed](#why-compression-is-needed)
+  - [Compression with logical backups](#compression-with-logical-backups)
+    - [External compression using gzip](#external-compression-using-gzip)
+  - [Compression with custom format](#compression-with-custom-format)
+  - [CPU impact of compression](#cpu-impact-of-compression)
+  - [Splitting large backups (file management)](#splitting-large-backups-file-management)
+  - [Splitting plain SQL dumps](#splitting-plain-sql-dumps)
+  - [Splitting compressed dumps](#splitting-compressed-dumps)
+  - [Directory format avoids splitting issues](#directory-format-avoids-splitting-issues)
+  - [Network transfer considerations](#network-transfer-considerations)
+  - [Common mistakes](#common-mistakes)
+  - [DBA best practices](#dba-best-practices)
+  - [Final mental model](#final-mental-model)
+  - [One-line explanation](#one-line-explanation)
+
+<br>
+<br>
 
 ## In simple words
 
-Compression and splitting exist to solve two real problems:
+**Compression and splitting exist to solve two real problems:**
 
 * backups are too big
 * backups are hard to move and restore
@@ -11,20 +37,28 @@ At scale, storing and handling backups becomes as important as creating them.
 
 ---
 
+<br>
+<br>
+
 ## Why compression is needed
 
-- Large databases produce:
+- **Large databases produce:**
   * huge dump files
   * high storage usage
   * slow transfers
 
-- Compression reduces:
+<br>
+
+- **Compression reduces:**
   * disk space usage
   * network transfer time
 
 But it always trades disk savings for CPU usage.
 
 ---
+
+<br>
+<br>
 
 <br>
 <br>
@@ -37,7 +71,9 @@ But it always trades disk savings for CPU usage.
 pg_dump mydb | gzip > mydb.sql.gz
 ```
 
-What happens:
+<br>
+
+**What happens:**
 
 * **`pg_dump`** outputs SQL
 * **`gzip`** compresses the stream
@@ -47,14 +83,18 @@ This is simple and widely used.
 
 ---
 
+<br>
+<br>
+
 ## Compression with custom format
 
 ```bash
 pg_dump -Fc mydb > mydb.dump
 ```
 
-Custom format:
+<br>
 
+**Custom format:**
 * uses internal compression
 * avoids external gzip
 * restores faster than plain SQL
@@ -63,27 +103,35 @@ For most production systems, this is the preferred option.
 
 ---
 
+<br>
+<br>
+
 ## CPU impact of compression
 
 Compression is CPU-heavy.
 
-High compression levels:
+<br>
 
-* reduce file size
-* slow down backup
+- **High compression levels:**
+  * reduce file size
+  * slow down backup
 
-Low compression levels:
+<br>
 
-* faster backups
-* larger files
+- **Low compression levels:**
+  * faster backups
+  * larger files
 
 DBAs must balance CPU availability and backup windows.
 
 ---
 
+<br>
+<br>
+
 ## Splitting large backups (file management)
 
-Very large backup files are:
+**Very large backup files are:**
 
 * difficult to move
 * harder to store
@@ -93,6 +141,9 @@ Splitting breaks a large backup into manageable chunks.
 
 ---
 
+<br>
+<br>
+
 ## Splitting plain SQL dumps
 
 ```bash
@@ -101,7 +152,7 @@ pg_dump mydb | split -b 5G - mydb_part_
 
 This creates multiple 5GB files.
 
-During restore:
+**During restore:**
 
 ```bash
 cat mydb_part_* | psql -d target_db
@@ -109,13 +160,16 @@ cat mydb_part_* | psql -d target_db
 
 ---
 
+<br>
+<br>
+
 ## Splitting compressed dumps
 
 ```bash
 pg_dump mydb | gzip | split -b 2G - mydb.gz_
 ```
 
-Restore:
+**Restore:**
 
 ```bash
 cat mydb.gz_* | gunzip | psql -d target_db
@@ -125,15 +179,18 @@ Splitting helps with storage and transfer limits.
 
 ---
 
+<br>
+<br>
+
 ## Directory format avoids splitting issues
 
-Using directory format:
+**Using directory format:**
 
 ```bash
 pg_dump -Fd mydb -f mydb_dir
 ```
 
-Advantages:
+**Advantages:**
 
 * files are already separated
 * supports parallel restore
@@ -143,14 +200,17 @@ This is the cleanest solution for very large databases.
 
 ---
 
+<br>
+<br>
+
 ## Network transfer considerations
 
-Compressed backups:
+**Compressed backups:**
 
 * reduce bandwidth usage
 * increase CPU load
 
-Uncompressed backups:
+**Uncompressed backups:**
 
 * faster CPU usage
 * slower transfers
@@ -158,6 +218,9 @@ Uncompressed backups:
 Network speed matters more than compression level.
 
 ---
+
+<br>
+<br>
 
 ## Common mistakes
 
@@ -168,6 +231,9 @@ Network speed matters more than compression level.
 Compression must be tested, not assumed.
 
 ---
+
+<br>
+<br>
 
 ## DBA best practices
 
@@ -187,6 +253,9 @@ Compression must be tested, not assumed.
 
 ---
 
-## One-line explanation (interview ready)
+<br>
+<br>
+
+## One-line explanation 
 
 Compression and splitting help manage large PostgreSQL backups by reducing storage size and improving transfer reliability, at the cost of additional CPU usage.
