@@ -1,0 +1,8 @@
+---
+- name: Revert SSHD and sudo
+  hosts: "{{ group }}"
+  become: yes
+  tasks:
+    - command: cp /etc/pam.d/sshd.bkp /etc/pam.d/sshd
+    - command: cp /etc/sudoers.bkp /etc/sudoers
+    - command: systemctl restart sshd

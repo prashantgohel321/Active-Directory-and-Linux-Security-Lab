@@ -1,6 +1,6 @@
 ---
 - name: Apply SSHD PAM and authselect (all servers)
-  hosts: all
+  hosts: "{{ group }}"
   become: yes
   tasks:
     - name: Install required packages
@@ -18,7 +18,7 @@
 
     - name: Copy sshd_pam_fix.sh
       copy:
-        src: sshd_pam_fix.sh
+        src: ~/scripts/sshd_pam_fix.sh
         dest: /tmp/sshd_pam_fix.sh
         mode: '0755'
 
@@ -33,9 +33,9 @@
   tasks:
     - name: Copy sudoers_setup.sh
       copy:
-        src: sudoers_setup.sh
+        src: ~/scripts/sudoers_setup.sh
         dest: /tmp/sudoers_setup.sh
         mode: '0755'
 
-    - name: Apply DevOps sudoers
+    - name: Apply "{{ group }}" sudoers
       command: "/tmp/sudoers_setup.sh {{ group }}"

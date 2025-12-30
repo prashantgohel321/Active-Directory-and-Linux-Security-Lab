@@ -1,0 +1,23 @@
+---
+- name: Copy SSH key file to all servers
+  hosts: all
+  become: no
+  vars:
+    src_key: "~/.ssh/id_rsa.pub"
+    dest_path: "~/.ssh/authorized_keys"
+
+  tasks:
+
+    - name: Ensure .ssh directory exists
+      file:
+        path: "~/.ssh"
+        state: directory
+        mode: '0700'
+
+    - name: Copy SSH public key into authorized_keys
+      authorized_key:
+        user: "{{ ansible_user }}"
+        state: present
+        key: "{{ lookup('file', src_key) }}"
+        manage_dir: false
+

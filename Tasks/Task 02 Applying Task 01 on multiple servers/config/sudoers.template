@@ -1,0 +1,42 @@
+## Host Aliases
+## Groups of machines. You may prefer to use hostnames (perhaps using
+## wildcards for entire domains) or IP addresses instead.
+# Host_Alias     FILESERVERS = fs1, fs2
+# Host_Alias     MAILSERVERS = smtp, smtp2
+
+# Refuse to run if unable to disable echo on the tty.
+#
+Defaults   !visiblepw
+Defaults    always_set_home
+Defaults    match_group_by_gid
+
+Defaults    always_query_group_plugin
+Defaults    env_reset
+Defaults    env_keep =  "COLORS DISPLAY HOSTNAME HISTSIZE KDEDIR LS_COLORS"
+Defaults    env_keep += "MAIL PS1 PS2 QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE"
+Defaults    env_keep += "LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES"
+Defaults    env_keep += "LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE"
+Defaults    env_keep += "LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY"
+
+## Disallowed Commands
+Cmnd_Alias SW_MGMT  = /bin/rpm, /usr/bin/dnf, /usr/bin/up2date
+Cmnd_Alias STR_FS   = /sbin/fdisk, /sbin/sfdisk, /bin/mount, /bin/umount
+Cmnd_Alias SYS_CTRL = /usr/sbin/reboot, /usr/sbin/shutdown
+Cmnd_Alias NET_CFG  = /sbin/iptables, /sbin/ifconfig
+Cmnd_Alias DELEG    = /usr/sbin/visudo, /usr/bin/chmod, /usr/bin/chown
+
+Cmnd_Alias RW_DENY = SW_MGMT, STR_FS, SYS_CTRL, NET_CFG, DELEG
+
+# Adding HOME to env_keep may enable a user to run unrestricted
+# commands via sudo.
+
+Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin
+## Allow root to run any commands anywhere
+root    ALL=(ALL)       NOPASSWD: ALL
+%wheel  ALL=(ALL:ALL)       NOPASSWD: ALL,!/usr/bin/su *
+%linuxadmin@TSS.com    ALL=(ALL:ALL)   NOPASSWD: ALL
+%admin  ALL=(ALL:ALL)       NOPASSWD: ALL,!RW_DENY
+
+
+## Read drop-in files from /etc/sudoers.d (the # here does not mean a comment)
+#includedir /etc/sudoers.d
