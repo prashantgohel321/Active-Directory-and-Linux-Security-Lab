@@ -18,7 +18,7 @@ if [ ! -f /etc/sudoers.bkp ]; then
   mv /etc/sudoers /etc/sudoers.bkp
 fi
 
-cp ../ansible/config/sudoers.template /etc/sudoers
+cp /tmp/sudoers.template /etc/sudoers
 
 DENY_FILE="/etc/sudoers.d/$ROLE"
 

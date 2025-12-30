@@ -15,7 +15,7 @@ if [ ! -f /etc/pam.d/sshd.bkp ]; then
     cp /etc/pam.d/sshd /etc/pam.d/sshd.bkp
 fi
 
-cp ../ansible/config/sshd.pam.template /etc/pam.d/sshd
+cp /tmp/sshd.pam.template /etc/pam.d/sshd
 chmod 644 /etc/pam.d/sshd
 
 echo "[+] Selecting custom authselect profile"

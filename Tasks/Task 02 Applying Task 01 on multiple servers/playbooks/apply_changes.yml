@@ -16,6 +16,18 @@
         update_cache: yes
         state: present
 
+    - name: COPY sshd PAM template
+      copy:
+        src: ~/config/sshd.pam.template
+        dest: /tmp/sshd.pam.template
+        mode: '0644'
+
+    - name: COPY sudoers main template
+      copy:
+        src: ~/config/sudoers.template
+        dest: /tmp/sshd.template
+        mode: '0644'
+    
     - name: Copy sshd_pam_fix.sh
       copy:
         src: ~/scripts/sshd_pam_fix.sh
