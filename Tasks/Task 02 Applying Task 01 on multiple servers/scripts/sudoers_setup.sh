@@ -31,7 +31,7 @@ if [[ "$ROLE" = "lnx_devops"            ||
       "$ROLE" = "lnx_aiteam"            ||
       "$ROLE" = "lnx_nextaml" ]]; then
 
-cat << EOF >> "$DENY_FILE"
+cat << EOF > "$DENY_FILE"
 %${ROLE} ALL=(ALL:ALL) NOPASSWD: /usr/bin/su - tssadmin
 EOF
 
