@@ -1,60 +1,109 @@
 # selinux-modes.md
 
-This file explains SELinux modes in depth and gives you hands-on steps to manage, debug, and tune SELinux in a Rocky Linux / RHEL environment. You will learn what each mode does, when to use it, how to switch modes safely, how to interpret AVC denials, and practical recovery/roll-back strategies. Everything is written as real commands you will run in the lab.
+- This file explains SELinux modes in depth and gives you hands-on steps to manage, debug, and tune SELinux in a Rocky Linux / RHEL environment. You will learn what each mode does, when to use it, how to switch modes safely, how to interpret AVC denials, and practical recovery/roll-back strategies. Everything is written as real commands you will run in the lab.
 
-No superficial definitions — you will be able to act on the system after reading this.
+
+---
+
+<br>
+<br>
+
+- [selinux-modes.md](#selinux-modesmd)
+- [1. What SELinux modes mean (plain language)](#1-what-selinux-modes-mean-plain-language)
+- [2. Checking the current SELinux state and mode](#2-checking-the-current-selinux-state-and-mode)
+- [3. Switching modes safely (runtime and persistent)](#3-switching-modes-safely-runtime-and-persistent)
+- [4. Why permissive is useful — capture AVCs without breaking things](#4-why-permissive-is-useful--capture-avcs-without-breaking-things)
+- [5. Interpreting AVC denials (the logs you need)](#5-interpreting-avc-denials-the-logs-you-need)
+- [6. Quick fixes vs correct fixes (do the right thing)](#6-quick-fixes-vs-correct-fixes-do-the-right-thing)
+- [7. Using audit2allow and building policy modules](#7-using-audit2allow-and-building-policy-modules)
+- [8. SELinux booleans — flip allowed behaviors safely](#8-selinux-booleans--flip-allowed-behaviors-safely)
+- [9. File contexts and types — the single most common SELinux issue](#9-file-contexts-and-types--the-single-most-common-selinux-issue)
+- [10. SELinux and services — practical examples](#10-selinux-and-services--practical-examples)
+- [11. Generating permissive domains (advanced safe workflow)](#11-generating-permissive-domains-advanced-safe-workflow)
+- [12. Troubleshooting steps — a checklist you will use](#12-troubleshooting-steps--a-checklist-you-will-use)
+- [13. Useful commands quick reference](#13-useful-commands-quick-reference)
+- [14. When to disable SELinux (and safer alternatives)](#14-when-to-disable-selinux-and-safer-alternatives)
+- [15. What you achieve after this file](#15-what-you-achieve-after-this-file)
+
+
+<br>
+<br>
 
 ---
 
 # 1. What SELinux modes mean (plain language)
 
-SELinux runs in three modes: **enforcing**, **permissive**, and **disabled**. Enforcing applies policy decisions: if policy denies an action, the kernel blocks it and logs an AVC (Access Vector Cache) denial. Permissive does not block actions — it only logs what would have been denied. Disabled turns SELinux off entirely; neither blocking nor logging occurs.
+- SELinux runs in three modes: **enforcing**, **permissive**, and **disabled**. <mark><b>Enforcing</b></mark> applies policy decisions: if policy denies an action, the kernel blocks it and logs an AVC (Access Vector Cache) denial. <mark><b>Permissive</b></mark> does not block actions — it only logs what would have been denied. <mark><b>Disabled</b></mark> turns SELinux off entirely; neither blocking nor logging occurs.
 
-Use **enforcing** for production security. Use **permissive** for debugging or during policy development so you can collect AVCs and build rules without causing outages. Use **disabled** only when you cannot make SELinux work and have a clear, documented reason; prefer permissive as an intermediate step because it preserves logs for analysis.
+<br>
+
+- Use <mark><b>enforcing</b></mark> for production security. Use <mark><b>permissive</b></mark> for debugging or during policy development so you can collect AVCs and build rules without causing outages. Use <mark><b>disabled</b></mark> only when you cannot make SELinux work and have a clear, documented reason; prefer permissive as an intermediate step because it preserves logs for analysis.
 
 ---
 
+<br>
+<br>
+
 # 2. Checking the current SELinux state and mode
 
-Commands to check quickly:
-```
+**Commands to check quickly:**
+
+```bash
 getenforce          # prints Enforcing|Permissive|Disabled
 sestatus            # more detailed status
 ```
+
+<br>
+
 `sestatus` shows policy name, loaded policy version, and whether file contexts are in place. If `getenforce` prints `Permissive`, the policy is still loaded but not enforced.
 
 ---
 
+<br>
+<br>
+
 # 3. Switching modes safely (runtime and persistent)
 
-To switch mode **at runtime** (no reboot):
-```
+**To switch mode at runtime (no reboot):**
+
+```bash
 # set to permissive
 setenforce 0
+
 # set to enforcing
 setenforce 1
+
 # verify
 getenforce
 ```
 This change lasts until reboot.
 
-To make a persistent change edit `/etc/selinux/config` and set `SELINUX=` to `enforcing`, `permissive`, or `disabled`:
-```
+<br>
+
+**To make a persistent change edit `/etc/selinux/config` and set `SELINUX=` to `enforcing`, `permissive`, or `disabled`:**
+```bash
 # /etc/selinux/config
 SELINUX=enforcing
 SELINUXTYPE=targeted
 ```
 Then reboot for the persistent change to take effect.
 
+<br>
+
 **Important workflow:** When debugging a service that fails under SELinux, do not immediately disable SELinux. Instead switch to permissive, reproduce the failure to collect AVC logs, then analyze and create a tailored fix.
 
 ---
 
+<br>
+<br>
+
 # 4. Why permissive is useful — capture AVCs without breaking things
 
-Permissive mode logs the exact AVC denials that would occur in enforcing mode, producing the data needed to write a correct policy or adjust file contexts. This avoids guesswork and prevents unnecessary disabling of SELinux.
+- Permissive mode logs the exact AVC denials that would occur in enforcing mode, producing the data needed to write a correct policy or adjust file contexts. This avoids guesswork and prevents unnecessary disabling of SELinux.
 
-Workflow example:
+<br>
+
+**Workflow example:**
 1. `setenforce 0` on the target host.  
 2. Reproduce the failing action (e.g., start service, run app).  
 3. Gather AVC logs from `/var/log/audit/audit.log` or `ausearch`.  
@@ -63,18 +112,57 @@ Workflow example:
 
 Do not leave systems in permissive mode longer than necessary.
 
+<br>
+<details>
+<summary><mark><b>What is AVC?</b></mark></summary>
+<br>
+
+- AVC means Access Vector Cache.
+- In simple words, AVC is <mark><b>how SELinux decides and remembers access rules</b></mark>.
+- When a program (like Apache or PostgreSQL) tries to access something (a file, port, directory), SELinux checks:
+  - who is asking
+  - what they want to access
+  - whether it is allowed
+
+<br>
+
+- That decision is stored in the AVC.
+- If access is allowed, SELinux lets it happen.
+- If access is not allowed, SELinux blocks it and logs an AVC denial.
+
+<br>
+
+**That’s why you often see messages like:**
+```bash
+avc:  denied  { read } for  pid=1234 comm="httpd" ...
+```
+
+In simple terms:
+- AVC is the decision engine
+- AVC denials are SELinux saying “no”
+- AVC logs tell you exactly what was blocked and why
+
+When debugging SELinux issues, AVC messages are the first and most important thing to check.
+
+</details>
+<br>
+
+
 ---
+
+<br>
+<br>
 
 # 5. Interpreting AVC denials (the logs you need)
 
 When SELinux blocks something, you will see AVC messages in `/var/log/audit/audit.log` or via `journalctl` and optionally in `/var/log/messages`. Example:
-```
+```bash
 type=AVC msg=audit(1712935032.532:491): avc:  denied  { write } for  pid=2345 comm="httpd" name="index.html" dev="sda1" ino=12345 scontext=system_u:system_r:httpd_t:s0 tcontext=unconfined_u:object_r:var_t:s0 tclass=file
 ```
 Key fields: `scontext` (source context — the process), `tcontext` (target context — the file), `tclass` (object class like file, dir, sock), and the permission attempted (`write`). Use these to plan a fix.
 
 Search for AVC denials quickly:
-```
+```bash
 ausearch -m avc -ts recent    # require audit package
 ausearch -m avc -i            # human readable
 journalctl -k | grep AVC
@@ -89,7 +177,7 @@ Quick but risky fixes: change file ownership or broad file contexts with `chcon 
 Correct fixes: fix the file context persistently with `semanage fcontext` and `restorecon`, or modify rules via a policy module.
 
 Example persistent file-context fix:
-```
+```bash
 semanage fcontext -a -t httpd_sys_content_t '/srv/myapp(/.*)?'
 restorecon -Rv /srv/myapp
 ```
